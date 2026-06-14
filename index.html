@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="ko" class="">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1.0, user-scalable=no"
+    />
+    <meta name="theme-color" content="#0f766e" />
+
+    <!-- iOS 홈 화면 설치 시 전체화면 + 상단바 톤 -->
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-title" content="토익연어" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+
+    <!-- 폰트: Pretendard(한글/본문), Space Grotesk(영어 표현), JetBrains Mono(빈칸/데이터) -->
+    <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.min.css"
+    />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Space+Grotesk:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+
+    <title>토익 연어 — Cloze & 복습</title>
+
+    <!-- 첫 페인트 전에 테마를 적용해 깜빡임 방지 -->
+    <script>
+      (function () {
+        try {
+          var saved = localStorage.getItem('theme')
+          var dark =
+            saved === 'dark' ||
+            (!saved && window.matchMedia('(prefers-color-scheme: dark)').matches)
+          document.documentElement.classList.toggle('dark', dark)
+          document
+            .querySelector('meta[name="theme-color"]')
+            ?.setAttribute('content', dark ? '#14161a' : '#0f766e')
+        } catch (e) {}
+      })()
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

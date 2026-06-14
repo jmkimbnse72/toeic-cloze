@@ -1,0 +1,88 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* =========================================================
+   디자인 토큰 — "제도판(drafting table)"
+   라이트: 차분한 벨럼 종이 / 다크: 딥 슬레이트
+   단일 액센트: 딥 틸(teal). 절제가 곧 세련됨.
+   ========================================================= */
+:root {
+  --bg: #fafaf8;
+  --surface: #ffffff;
+  --surface-2: #f2f1ec;
+  --border: #e5e4de;
+  --text: #1c1d1a;
+  --text-2: #6b6c66;
+  --text-3: #9c9d96;
+  --accent: #0f766e;
+  --accent-weak: #e3f0ee;
+  --danger: #b4452f;
+  --danger-weak: #f6e3de;
+  --amber: #b6822a;
+  --amber-weak: #f4e9d0;
+
+  color-scheme: light;
+}
+
+.dark {
+  --bg: #14161a;
+  --surface: #1b1e23;
+  --surface-2: #23272e;
+  --border: #2d323a;
+  --text: #ecedea;
+  --text-2: #9da1a0;
+  --text-3: #696e6d;
+  --accent: #34d0b4;
+  --accent-weak: #15302c;
+  --danger: #e0795f;
+  --danger-weak: #3a221c;
+  --amber: #d9a64c;
+  --amber-weak: #342a18;
+
+  color-scheme: dark;
+}
+
+@layer base {
+  html {
+    -webkit-text-size-adjust: 100%;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  body {
+    @apply bg-bg text-ink font-sans antialiased;
+    /* iPad 안전영역(노치/홈바) 대응 */
+    padding: env(safe-area-inset-top) env(safe-area-inset-right)
+      env(safe-area-inset-bottom) env(safe-area-inset-left);
+    /* PWA에서 텍스트 선택/당겨서 새로고침 방지 */
+    overscroll-behavior-y: none;
+    transition: background-color 0.2s ease, color 0.2s ease;
+  }
+
+  /* 키보드 포커스는 항상 보이게 (접근성 하한선) */
+  :focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+    border-radius: 6px;
+  }
+
+  ::selection {
+    background: var(--accent-weak);
+  }
+}
+
+@layer utilities {
+  /* 라벨/아이브로용 — 제도 도면의 캡션 느낌 */
+  .eyebrow {
+    @apply font-mono text-[0.7rem] font-medium uppercase tracking-[0.18em] text-ink-3;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    transition-duration: 0.001ms !important;
+  }
+}
