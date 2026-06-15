@@ -2,8 +2,12 @@ import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import { VitePWA } from 'vite-plugin-pwa'
 
+// GitHub Pages 프로젝트 사이트는 https://<id>.github.io/<repo>/ 하위 경로로 서빙됨
+const base = '/toeic-cloze/'
+
 // 앱 이름/테마는 manifest에서 한 곳으로 관리
 export default defineConfig({
+  base,
   plugins: [
     react(),
     VitePWA({
@@ -19,8 +23,8 @@ export default defineConfig({
         background_color: '#fafaf8',
         display: 'standalone',
         orientation: 'any',
-        start_url: '/',
-        scope: '/',
+        start_url: base,
+        scope: base,
         icons: [
           { src: 'pwa-192.png', sizes: '192x192', type: 'image/png' },
           { src: 'pwa-512.png', sizes: '512x512', type: 'image/png' },
@@ -35,7 +39,7 @@ export default defineConfig({
       workbox: {
         // 시드 데이터/폰트 포함 모든 정적 자산을 오프라인 캐시
         globPatterns: ['**/*.{js,css,html,svg,png,ico,woff2,json}'],
-        navigateFallback: '/index.html',
+        navigateFallback: base + 'index.html',
         cleanupOutdatedCaches: true,
       },
       devOptions: {
