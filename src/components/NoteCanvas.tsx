@@ -156,6 +156,14 @@ export default function NoteCanvas({ deckId, onClose }: { deckId: string; onClos
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [deckId])
 
+  // 메모가 열려있는 동안 문서 전체에서 텍스트 선택 차단 (자동 선택 방지)
+  useEffect(() => {
+    const b = document.body.style as CSSStyleDeclaration & { webkitUserSelect?: string; webkitTouchCallout?: string }
+    const prev = { us: b.userSelect, wus: b.webkitUserSelect, wtc: b.webkitTouchCallout }
+    b.userSelect = 'none'; b.webkitUserSelect = 'none'; b.webkitTouchCallout = 'none'
+    return () => { b.userSelect = prev.us; b.webkitUserSelect = prev.wus ?? ''; b.webkitTouchCallout = prev.wtc ?? '' }
+  }, [])
+
   // ── 네이티브 포인터 (iOS에서 안정적) ──────────────────────
   useEffect(() => {
     const c = canvasRef.current; if (!c) return
@@ -174,9 +182,10 @@ export default function NoteCanvas({ deckId, onClose }: { deckId: string; onClos
       }
       if (!isPen(e.pointerType)) return
       e.preventDefault()
+      // 진행 중인 텍스트 선택을 즉시 해제 (다음 글자가 '선택 해제'에 먹히는 현상 방지)
+      try { const g = window.getSelection?.(); if (g && g.rangeCount) g.removeAllRanges() } catch { /* noop */ }
       // 펜이 닿으면 손가락/손바닥 제스처 즉시 취소 (필기 중 손 흔들림 방지)
       touchesRef.current.clear()
-      try { c.setPointerCapture(e.pointerId) } catch { /* noop */ }
       penIdRef.current = e.pointerId
       const l = lp(e.clientX, e.clientY)
       const w = toWorld(viewRef.current, l.x, l.y)
@@ -203,7 +212,8 @@ export default function NoteCanvas({ deckId, onClose }: { deckId: string; onClos
       const a = penActRef.current; if (!a) return
       e.preventDefault()
       if (a.kind === 'draw' && drawingRef.current) {
-        const evs = e.getCoalescedEvents ? e.getCoalescedEvents() : [e]
+        let evs: PointerEvent[] = [e]
+        try { if (e.getCoalescedEvents) { const co = e.getCoalescedEvents(); if (co && co.length) evs = co } } catch { /* noop */ }
         const v = viewRef.current
         for (const ev of evs) {
           const l = lp(ev.clientX, ev.clientY); const w = toWorld(v, l.x, l.y)
@@ -279,20 +289,29 @@ export default function NoteCanvas({ deckId, onClose }: { deckId: string; onClos
       redraw()
     }
     const noCtx = (e: Event) => e.preventDefault()
+    const swallowTouch = (e: TouchEvent) => { e.preventDefault() } // iOS 선택/제스처 인식 차단 (포인터 이벤트는 그대로 발생)
 
     c.addEventListener('pointerdown', down)
-    c.addEventListener('pointermove', move)
-    c.addEventListener('pointerup', up)
-    c.addEventListener('pointercancel', up)
+    window.addEventListener('pointermove', move)
+    window.addEventListener('pointerup', up)
+    window.addEventListener('pointercancel', up)
     c.addEventListener('wheel', wheel, { passive: false })
     c.addEventListener('contextmenu', noCtx)
+    c.addEventListener('touchstart', swallowTouch, { passive: false })
+    c.addEventListener('touchmove', swallowTouch, { passive: false })
+    c.addEventListener('touchend', swallowTouch, { passive: false })
+    c.addEventListener('touchcancel', swallowTouch, { passive: false })
     return () => {
       c.removeEventListener('pointerdown', down)
-      c.removeEventListener('pointermove', move)
-      c.removeEventListener('pointerup', up)
-      c.removeEventListener('pointercancel', up)
+      window.removeEventListener('pointermove', move)
+      window.removeEventListener('pointerup', up)
+      window.removeEventListener('pointercancel', up)
       c.removeEventListener('wheel', wheel)
       c.removeEventListener('contextmenu', noCtx)
+      c.removeEventListener('touchstart', swallowTouch)
+      c.removeEventListener('touchmove', swallowTouch)
+      c.removeEventListener('touchend', swallowTouch)
+      c.removeEventListener('touchcancel', swallowTouch)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
