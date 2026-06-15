@@ -4,7 +4,7 @@ import { Pen, Eraser, Marquee, Hand, Recenter, Undo, Trash, Copy, Close } from '
 import {
   type View, type Pt, type Rect,
   toWorld, pinchView, zoomAt, panView,
-  distToSeg, bbox, inRect, dist, mid,
+  distToSeg, bbox, inRect, dist, mid, lerpPt,
 } from '../lib/notegeom'
 
 interface Stroke { id: string; color: string; width: number; pts: Pt[] }
@@ -14,6 +14,8 @@ const COLORS = ['ink', '#19a38c', '#3b82f6', '#ef4444', '#f59e0b', '#22c55e', '#
 const WIDTHS = [2.5, 4.5, 8]
 const ERASER_R = 14
 const MIN_DIST = 1.2
+// 새 점이 직전 점 쪽으로 따라가는 비율(EMA). 작을수록 매끈하지만 코너가 둥글고 지연 ↑
+const SMOOTHING = 0.4
 const MIN_SCALE = 0.4
 const MAX_SCALE = 5
 
@@ -191,7 +193,7 @@ export default function NoteCanvas({ deckId, onClose }: { deckId: string; onClos
       const w = toWorld(viewRef.current, l.x, l.y)
       const t = toolRef.current
       if (t === 'pan') penActRef.current = { kind: 'pan', last: l }
-      else if (t === 'pen') { pushHistory(); drawingRef.current = { id: uid(), color: colorRef.current, width: widthRef.current, pts: [w] }; penActRef.current = { kind: 'draw' }; redraw() }
+      else if (t === 'pen') { pushHistory(); drawingRef.current = { id: uid(), color: colorRef.current, width: widthRef.current, pts: [w] }; penActRef.current = { kind: 'draw', last: w }; redraw() }
       else if (t === 'eraser') { pushHistory(); penActRef.current = { kind: 'erase' }; eraseAt(w) }
       else {
         const cur = selRef.current
@@ -215,11 +217,14 @@ export default function NoteCanvas({ deckId, onClose }: { deckId: string; onClos
         let evs: PointerEvent[] = [e]
         try { if (e.getCoalescedEvents) { const co = e.getCoalescedEvents(); if (co && co.length) evs = co } } catch { /* noop */ }
         const v = viewRef.current
+        const pts = drawingRef.current.pts
         for (const ev of evs) {
           const l = lp(ev.clientX, ev.clientY); const w = toWorld(v, l.x, l.y)
-          const last = drawingRef.current.pts[drawingRef.current.pts.length - 1]
-          if (last && dist(w, last) < MIN_DIST / v.scale) continue
-          drawingRef.current.pts.push(w)
+          if (a.last && dist(w, a.last) < MIN_DIST / v.scale) continue
+          a.last = w
+          const prev = pts[pts.length - 1]
+          // 직전 점에서 새 점 쪽으로 일부만 이동 → 센서 떨림을 눌러 매끈하게
+          pts.push(prev ? lerpPt(prev, w, SMOOTHING) : w)
         }
         redraw()
       } else if (a.kind === 'erase') { const l = lp(e.clientX, e.clientY); eraseAt(toWorld(viewRef.current, l.x, l.y)) }
@@ -245,7 +250,13 @@ export default function NoteCanvas({ deckId, onClose }: { deckId: string; onClos
       if (penIdRef.current !== e.pointerId) return
       penIdRef.current = null
       const a = penActRef.current; penActRef.current = null; if (!a) return
-      if (a.kind === 'draw' && drawingRef.current) { strokesRef.current = [...strokesRef.current, drawingRef.current]; drawingRef.current = null; redraw(); scheduleSave(); rerender() }
+      if (a.kind === 'draw' && drawingRef.current) {
+        // EMA 지연으로 끝점이 살짝 못 미치므로 실제 펜을 뗀 위치를 보정해 추가
+        const l = lp(e.clientX, e.clientY); const w = toWorld(viewRef.current, l.x, l.y)
+        const pts = drawingRef.current.pts
+        if (pts.length && dist(w, pts[pts.length - 1]) > 0.4) pts.push(w)
+        strokesRef.current = [...strokesRef.current, drawingRef.current]; drawingRef.current = null; redraw(); scheduleSave(); rerender()
+      }
       else if (a.kind === 'erase') scheduleSave()
       else if (a.kind === 'selrect') {
         const r = selRectRef.current!; const sc = viewRef.current.scale

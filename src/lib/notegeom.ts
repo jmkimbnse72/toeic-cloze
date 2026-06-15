@@ -61,3 +61,5 @@ export const inRect = (x: number, y: number, r: Rect) =>
 
 export const dist = (a: Pt, b: Pt) => Math.hypot(a.x - b.x, a.y - b.y)
 export const mid = (a: Pt, b: Pt): Pt => ({ x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 })
+/** a에서 b로 t(0~1)만큼 보간 — 입력 점 떨림을 누르는 저주파 평활에 사용 */
+export const lerpPt = (a: Pt, b: Pt, t: number): Pt => ({ x: a.x + (b.x - a.x) * t, y: a.y + (b.y - a.y) * t })
