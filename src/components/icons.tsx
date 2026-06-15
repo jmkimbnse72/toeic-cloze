@@ -123,3 +123,14 @@ export const Close = ({ size }: P) => (
     <path d="M6 6l12 12M18 6L6 18" />
   </svg>
 )
+export const Hand = ({ size }: P) => (
+  <svg {...base(size)}>
+    <path d="M8 13V6a1.5 1.5 0 0 1 3 0v5m0-1V4.5a1.5 1.5 0 0 1 3 0V11m0-1.5a1.5 1.5 0 0 1 3 0V14a6 6 0 0 1-6 6h-1.5a6 6 0 0 1-5.2-3L6 13.4a1.5 1.5 0 0 1 2.5-1.6z" />
+  </svg>
+)
+export const Recenter = ({ size }: P) => (
+  <svg {...base(size)}>
+    <circle cx="12" cy="12" r="3" />
+    <path d="M12 3v3M12 18v3M3 12h3M18 12h3" />
+  </svg>
+)
