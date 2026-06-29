@@ -177,6 +177,9 @@ export default function Settings({ back }: { back: () => void }) {
       <p className="mt-8 text-center font-mono text-xs text-ink-3">
         토익 연어 · 학습 기록은 이 기기에 저장됩니다
       </p>
+      <p className="mt-2 text-center font-mono text-[0.7rem] text-ink-3">
+        v{__APP_VERSION__} · {__BUILD_DATE__} ({__BUILD_SHA__})
+      </p>
     </div>
   )
 }

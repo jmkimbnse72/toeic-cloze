@@ -25,6 +25,8 @@ const SMOOTHING = 0.4
 const MIN_SCALE = 0.4
 const MAX_SCALE = 5
 const HISTORY_MAX = 100
+const LINE_GAP = 36   // 대학노트 가로줄 간격(월드 단위)
+const MARGIN_X = 56   // 왼쪽 여백선 x 위치(월드 단위)
 
 const uid = () => Math.random().toString(36).slice(2, 9)
 const cssVar = (n: string) => getComputedStyle(document.documentElement).getPropertyValue(n).trim()
@@ -55,7 +57,7 @@ export default function NoteCanvas({ deckId, onClose }: { deckId: string; onClos
   const pinchRef = useRef<{ dist: number; anchor: Pt; scale: number }>({ dist: 1, anchor: { x: 0, y: 0 }, scale: 1 })
 
   // 색상은 매 프레임 getComputedStyle 하지 않고 캐시(테마 변경 시에만 갱신)
-  const colorsRef = useRef({ ink: '#1c1d1a', border: '#e5e4de', accent: '#0f766e' })
+  const colorsRef = useRef({ ink: '#1c1d1a', border: '#e5e4de', accent: '#0f766e', danger: '#b4452f' })
   const dprRef = useRef(Math.min(2, (typeof window !== 'undefined' ? window.devicePixelRatio : 1) || 1))
 
   // rAF로 그리기를 1프레임 1회로 합침(과도한 redraw 방지)
@@ -80,6 +82,7 @@ export default function NoteCanvas({ deckId, onClose }: { deckId: string; onClos
       ink: cssVar('--text') || '#1c1d1a',
       border: cssVar('--border') || '#e5e4de',
       accent: cssVar('--accent') || '#0f766e',
+      danger: cssVar('--danger') || '#b4452f',
     }
   }
 
@@ -108,12 +111,17 @@ export default function NoteCanvas({ deckId, onClose }: { deckId: string; onClos
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
     ctx.clearRect(0, 0, W, H)
     ctx.setTransform(dpr * v.scale, 0, 0, dpr * v.scale, dpr * v.x, dpr * v.y)
-    if (24 * v.scale > 9) {
-      ctx.fillStyle = col.border; ctx.globalAlpha = 0.5
+    // 대학노트: 가로줄 + 왼쪽 여백선 (월드 좌표 → 내용과 함께 이동/확대)
+    if (LINE_GAP * v.scale > 6) {
       const x0 = -v.x / v.scale, y0 = -v.y / v.scale, x1 = (W - v.x) / v.scale, y1 = (H - v.y) / v.scale
-      const r = 0.8 / v.scale
-      for (let gx = Math.floor(x0 / 24) * 24; gx < x1; gx += 24)
-        for (let gy = Math.floor(y0 / 24) * 24; gy < y1; gy += 24) { ctx.beginPath(); ctx.arc(gx, gy, r, 0, 6.2832); ctx.fill() }
+      ctx.strokeStyle = col.border; ctx.lineWidth = 1 / v.scale; ctx.globalAlpha = 0.9
+      ctx.beginPath()
+      for (let gy = Math.ceil(y0 / LINE_GAP) * LINE_GAP; gy < y1; gy += LINE_GAP) { ctx.moveTo(x0, gy); ctx.lineTo(x1, gy) }
+      ctx.stroke()
+      if (MARGIN_X > x0 && MARGIN_X < x1) {
+        ctx.strokeStyle = col.danger; ctx.lineWidth = 1.4 / v.scale; ctx.globalAlpha = 0.5
+        ctx.beginPath(); ctx.moveTo(MARGIN_X, y0); ctx.lineTo(MARGIN_X, y1); ctx.stroke()
+      }
       ctx.globalAlpha = 1
     }
     ctx.lineCap = 'round'; ctx.lineJoin = 'round'

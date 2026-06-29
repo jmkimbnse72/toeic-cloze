@@ -1,13 +1,26 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import { VitePWA } from 'vite-plugin-pwa'
+import { readFileSync } from 'node:fs'
+import { execSync } from 'node:child_process'
 
 // GitHub Pages 프로젝트 사이트는 https://<id>.github.io/<repo>/ 하위 경로로 서빙됨
 const base = '/toeic-cloze/'
 
+// 버전 정보: 빌드(=업데이트)마다 자동으로 바뀌도록 주입
+const pkg = JSON.parse(readFileSync(new URL('./package.json', import.meta.url), 'utf-8')) as { version: string }
+let buildSha = 'local'
+try { buildSha = execSync('git rev-parse --short HEAD').toString().trim() } catch { /* git 미사용 환경 */ }
+const buildDate = new Date().toISOString().slice(0, 10)
+
 // 앱 이름/테마는 manifest에서 한 곳으로 관리
 export default defineConfig({
   base,
+  define: {
+    __APP_VERSION__: JSON.stringify(pkg.version),
+    __BUILD_SHA__: JSON.stringify(buildSha),
+    __BUILD_DATE__: JSON.stringify(buildDate),
+  },
   plugins: [
     react(),
     VitePWA({
