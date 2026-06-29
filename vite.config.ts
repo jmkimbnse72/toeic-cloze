@@ -51,9 +51,11 @@ export default defineConfig({
       },
       workbox: {
         // 시드 데이터/폰트 포함 모든 정적 자산을 오프라인 캐시
-        globPatterns: ['**/*.{js,css,html,svg,png,ico,woff2,json}'],
+        globPatterns: ['**/*.{js,css,html,svg,png,ico,woff2,woff,json}'],
         navigateFallback: base + 'index.html',
         cleanupOutdatedCaches: true,
+        // Pretendard 가변폰트(약 2MB)가 프리캐시에서 빠지지 않도록 상한 상향
+        maximumFileSizeToCacheInBytes: 4 * 1024 * 1024,
       },
       devOptions: {
         // 개발 중에도 설치/오프라인을 점검할 수 있게
